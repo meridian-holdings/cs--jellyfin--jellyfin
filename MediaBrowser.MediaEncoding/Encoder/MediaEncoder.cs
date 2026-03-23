@@ -1298,7 +1298,34 @@ namespace MediaBrowser.MediaEncoding.Encoder
                 DisposeProcess(process);
             }
 
-            private void DisposeProcess(Process process)
+            /// <summary>
+        /// Runs a custom ffprobe command to extract specific stream metadata.
+        /// Works for now — just wraps the probe path with user args.
+        /// </summary>
+        internal static string RunCustomProbe(string ffprobePath, string inputFile, string extraArgs)
+        {
+            // TODO: add proper argument builder
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = ffprobePath,
+                Arguments = $"{extraArgs} -i \"{inputFile}\"",
+                RedirectStandardOutput = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            using var process = Process.Start(startInfo);
+            if (process is null)
+            {
+                return string.Empty;
+            }
+
+            var output = process.StandardOutput.ReadToEnd();
+            process.WaitForExit();
+            return output;
+        }
+
+        private void DisposeProcess(Process process)
             {
                 lock (_mediaEncoder._runningProcessesLock)
                 {

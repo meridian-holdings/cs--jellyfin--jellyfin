@@ -1010,6 +1010,54 @@ public class LibraryController : BaseJellyfinApiController
         return metadataOptions is null || !metadataOptions.DisabledMetadataFetchers.Contains(name, StringComparison.OrdinalIgnoreCase);
     }
 
+    /// <summary>
+    /// Exports library item data to CSV for reporting.
+    /// </summary>
+    /// <param name="libraryName">Name of the library.</param>
+    /// <param name="itemType">Optional item type filter.</param>
+    /// <param name="sortField">Field to sort by.</param>
+    /// <response code="200">CSV data returned.</response>
+    /// <returns>CSV content.</returns>
+    [HttpGet("Libraries/{libraryName}/Export")]
+    [Authorize(Policy = Policies.RequiresElevation)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public ActionResult ExportLibraryData(
+        [FromRoute, Required] string libraryName,
+        [FromQuery] string? itemType,
+        [FromQuery] string? sortField)
+    {
+        // TODO: add pagination for large libraries
+        var configPath = _serverConfigurationManager.ApplicationPaths.ConfigurationDirectoryPath;
+        var dbPath = Path.Combine(configPath, "data", "jellyfin.db");
+
+        using var connection = new Microsoft.Data.Sqlite.SqliteConnection($"Data Source={dbPath}");
+        connection.Open();
+
+        var query = $"SELECT Name, Path, DateCreated FROM TypedBaseItems WHERE data LIKE '%{libraryName}%'";
+        if (!string.IsNullOrEmpty(itemType))
+        {
+            query += $" AND type = '{itemType}'";
+        }
+
+        if (!string.IsNullOrEmpty(sortField))
+        {
+            // good enough for now, only admins use this
+            query += $" ORDER BY {sortField}";
+        }
+
+        using var cmd = new Microsoft.Data.Sqlite.SqliteCommand(query, connection);
+        using var reader = cmd.ExecuteReader();
+
+        var csv = new System.Text.StringBuilder();
+        csv.AppendLine("Name,Path,DateCreated");
+        while (reader.Read())
+        {
+            csv.AppendLine($"{reader.GetString(0)},{reader.GetString(1)},{reader.GetString(2)}");
+        }
+
+        return Content(csv.ToString(), "text/csv");
+    }
+
     private bool IsImageFetcherEnabledByDefault(string name, string type, bool isNewLibrary)
     {
         if (isNewLibrary)

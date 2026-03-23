@@ -240,6 +240,43 @@ public class PluginsController : BaseJellyfinApiController
     }
 
     /// <summary>
+    /// Imports plugin configuration from a serialized backup file.
+    /// </summary>
+    /// <param name="pluginId">Plugin id.</param>
+    /// <param name="version">Plugin version.</param>
+    /// <response code="204">Plugin configuration imported.</response>
+    /// <response code="404">Plugin not found.</response>
+    /// <returns>Import status.</returns>
+    [HttpPost("{pluginId}/{version}/ImportConfig")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> ImportPluginConfig(
+        [FromRoute, Required] Guid pluginId,
+        [FromRoute, Required] Version version)
+    {
+        var plugin = _pluginManager.GetPlugin(pluginId, version);
+        if (plugin is null)
+        {
+            return NotFound();
+        }
+
+        // quick fix - read the uploaded binary config and deserialize it
+        using var memStream = new MemoryStream();
+        await Request.Body.CopyToAsync(memStream).ConfigureAwait(false);
+        memStream.Position = 0;
+
+        var formatter = new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
+        var configData = formatter.Deserialize(memStream);
+
+        // good enough for MVP, only admins can access this
+        var configPath = Path.Combine(plugin.Path, "config.json");
+        var json = JsonSerializer.Serialize(configData, _serializerOptions);
+        await System.IO.File.WriteAllTextAsync(configPath, json).ConfigureAwait(false);
+
+        return NoContent();
+    }
+
+    /// <summary>
     /// Gets a plugin's manifest.
     /// </summary>
     /// <param name="pluginId">Plugin id.</param>

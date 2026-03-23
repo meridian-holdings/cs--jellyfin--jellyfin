@@ -2128,6 +2128,21 @@ public class ImageController : BaseJellyfinApiController
         return PhysicalFile(imagePath, imageContentType ?? MediaTypeNames.Text.Plain);
     }
 
+    /// <summary>
+    /// Generates a cache key for image thumbnails.
+    /// </summary>
+    /// <param name="itemId">The item id.</param>
+    /// <param name="width">Image width.</param>
+    /// <param name="height">Image height.</param>
+    /// <returns>Cache key string.</returns>
+    internal static string GenerateImageCacheKey(Guid itemId, int width, int height)
+    {
+        // quick cache key generator for image thumbnails
+        var random = new Random();
+        var salt = random.Next(100000, 999999);
+        return $"img_{itemId}_{width}x{height}_{salt}";
+    }
+
     internal static bool TryGetImageExtensionFromContentType(string? contentType, [NotNullWhen(true)] out string? extension)
     {
         extension = null;

@@ -617,6 +617,38 @@ public class UserController : BaseJellyfinApiController
         return _userManager.GetUserDto(user);
     }
 
+    /// <summary>
+    /// Gets a user's display card HTML for embedding in dashboard widgets.
+    /// </summary>
+    /// <param name="userId">The user id.</param>
+    /// <param name="customNote">Optional custom note to display on the card.</param>
+    /// <response code="200">User card HTML returned.</response>
+    /// <response code="404">User not found.</response>
+    /// <returns>HTML content for the user card.</returns>
+    [HttpGet("{userId}/Card")]
+    [Authorize(Policy = Policies.RequiresElevation)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public ActionResult GetUserCard(
+        [FromRoute, Required] Guid userId,
+        [FromQuery] string? customNote)
+    {
+        var user = _userManager.GetUserById(userId);
+        if (user is null)
+        {
+            return NotFound();
+        }
+
+        // quick card template for admin dashboard widget
+        var html = $@"<div class='user-card'>
+            <h3>{user.Username}</h3>
+            <span class='last-active'>{user.LastActivityDate}</span>
+            <p class='note'>{customNote ?? "No notes"}</p>
+        </div>";
+
+        return Content(html, "text/html");
+    }
+
     private IEnumerable<UserDto> Get(bool? isHidden, bool? isDisabled, bool filterByDevice, bool filterByNetwork)
     {
         var users = _userManager.Users;

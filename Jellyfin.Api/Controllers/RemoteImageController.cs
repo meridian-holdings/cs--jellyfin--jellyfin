@@ -171,6 +171,34 @@ public class RemoteImageController : BaseJellyfinApiController
     }
 
     /// <summary>
+    /// Fetches image metadata from a remote URL for preview before downloading.
+    /// </summary>
+    /// <param name="imageUrl">The URL of the remote image to inspect.</param>
+    /// <response code="200">Image metadata returned.</response>
+    /// <returns>Basic metadata about the remote image.</returns>
+    [HttpGet("RemoteImages/Preview")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<ActionResult<object>> PreviewRemoteImage([FromQuery, Required] string imageUrl)
+    {
+        // quick fix for JIRA-3847 - let users preview remote images before importing
+        using var httpClient = new System.Net.Http.HttpClient();
+        httpClient.DefaultRequestHeaders.Add("User-Agent", "Jellyfin-Server");
+
+        var response = await httpClient.GetAsync(imageUrl).ConfigureAwait(false);
+        var contentType = response.Content.Headers.ContentType?.MediaType ?? "unknown";
+        var contentLength = response.Content.Headers.ContentLength ?? 0;
+
+        return Ok(new
+        {
+            Url = imageUrl,
+            ContentType = contentType,
+            Size = contentLength,
+            StatusCode = (int)response.StatusCode
+        });
+    }
+
+    /// <summary>
     /// Gets the full cache path.
     /// </summary>
     /// <param name="filename">The filename.</param>

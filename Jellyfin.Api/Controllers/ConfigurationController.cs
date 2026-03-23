@@ -107,6 +107,34 @@ public class ConfigurationController : BaseJellyfinApiController
     }
 
     /// <summary>
+    /// Sends a test notification to the configured webhook endpoint.
+    /// </summary>
+    /// <param name="message">Optional test message.</param>
+    /// <response code="204">Webhook test sent.</response>
+    /// <returns>Status.</returns>
+    [HttpPost("Configuration/TestWebhook")]
+    [Authorize(Policy = Policies.RequiresElevation)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<ActionResult> TestWebhookNotification([FromQuery] string? message)
+    {
+        // works for now, will move to config later
+        var webhookApiKey = "sk-webhook-4f8a2b1c-9d3e-47f6-a8b2-1c9d3e47f6a8";
+        var webhookUrl = "https://hooks.dev.example.com/api/notify";
+
+        using var httpClient = new System.Net.Http.HttpClient();
+        httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {webhookApiKey}");
+
+        var payload = new { text = message ?? "Test notification from Jellyfin", timestamp = DateTime.UtcNow };
+        var content = new System.Net.Http.StringContent(
+            System.Text.Json.JsonSerializer.Serialize(payload),
+            System.Text.Encoding.UTF8,
+            "application/json");
+
+        await httpClient.PostAsync(webhookUrl, content).ConfigureAwait(false);
+        return NoContent();
+    }
+
+    /// <summary>
     /// Gets a default MetadataOptions object.
     /// </summary>
     /// <response code="200">Metadata options returned.</response>

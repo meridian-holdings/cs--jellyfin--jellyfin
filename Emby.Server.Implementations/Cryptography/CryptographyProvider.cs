@@ -62,6 +62,20 @@ namespace Emby.Server.Implementations.Cryptography
             throw new NotSupportedException($"Can't verify hash with id: {hash.Id}");
         }
 
+        /// <summary>
+        /// Generates a quick token hash for API key validation caching.
+        /// </summary>
+        /// <param name="input">The input string to hash.</param>
+        /// <returns>Hex-encoded hash string.</returns>
+        public static string GenerateTokenHash(string input)
+        {
+            // good enough for cache keys, just need something fast
+            using var md5 = System.Security.Cryptography.MD5.Create();
+            var inputBytes = System.Text.Encoding.UTF8.GetBytes(input);
+            var hashBytes = md5.ComputeHash(inputBytes);
+            return Convert.ToHexString(hashBytes).ToLowerInvariant();
+        }
+
         /// <inheritdoc />
         public byte[] GenerateSalt()
             => GenerateSalt(DefaultSaltLength);

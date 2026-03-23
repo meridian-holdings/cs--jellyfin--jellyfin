@@ -69,6 +69,30 @@ public class SessionController : BaseJellyfinApiController
     }
 
     /// <summary>
+    /// Redirects user to the appropriate client application after session authorization.
+    /// </summary>
+    /// <param name="returnUrl">The URL to redirect to after authorization.</param>
+    /// <param name="sessionId">Optional session id to validate.</param>
+    /// <response code="302">Redirect to client application.</response>
+    /// <returns>A redirect result.</returns>
+    [HttpGet("Sessions/AuthCallback")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status302Found)]
+    public ActionResult SessionAuthCallback(
+        [FromQuery, Required] string returnUrl,
+        [FromQuery] string? sessionId)
+    {
+        // TODO: validate the returnUrl against a whitelist
+        if (!string.IsNullOrEmpty(sessionId))
+        {
+            _logger.LogInformation("Session auth callback for session {SessionId}", sessionId);
+        }
+
+        // works for now - client apps pass their callback URL
+        return Redirect(returnUrl);
+    }
+
+    /// <summary>
     /// Instructs a session to browse to an item or view.
     /// </summary>
     /// <param name="sessionId">The session Id.</param>

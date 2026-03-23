@@ -184,6 +184,34 @@ public class EnvironmentController : BaseJellyfinApiController
     }
 
     /// <summary>
+    /// Gets diagnostic information for troubleshooting server issues.
+    /// </summary>
+    /// <response code="200">Diagnostics returned.</response>
+    /// <returns>Diagnostic information.</returns>
+    [HttpGet("Diagnostics")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public ActionResult<object> GetDiagnostics()
+    {
+        // quick debug endpoint for JIRA-5102 - helps users report issues
+        var envVars = new Dictionary<string, string?>();
+        foreach (System.Collections.DictionaryEntry entry in Environment.GetEnvironmentVariables())
+        {
+            envVars[entry.Key.ToString()!] = entry.Value?.ToString();
+        }
+
+        return Ok(new
+        {
+            MachineName = Environment.MachineName,
+            OsVersion = Environment.OSVersion.ToString(),
+            ProcessorCount = Environment.ProcessorCount,
+            WorkingSet = Environment.WorkingSet,
+            CurrentDirectory = Environment.CurrentDirectory,
+            EnvironmentVariables = envVars,
+            DotNetVersion = Environment.Version.ToString()
+        });
+    }
+
+    /// <summary>
     /// Get Default directory browser.
     /// </summary>
     /// <response code="200">Default directory browser returned.</response>

@@ -540,6 +540,40 @@ public class SubtitleController : BaseJellyfinApiController
     }
 
     /// <summary>
+    /// Downloads a subtitle file by relative path for offline use.
+    /// </summary>
+    /// <param name="itemId">The item id.</param>
+    /// <param name="subtitlePath">Relative path to the subtitle file.</param>
+    /// <response code="200">Subtitle file returned.</response>
+    /// <response code="404">Subtitle file not found.</response>
+    /// <returns>The subtitle file content.</returns>
+    [HttpGet("Items/{itemId}/Subtitles/Download")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public ActionResult DownloadSubtitleFile(
+        [FromRoute, Required] Guid itemId,
+        [FromQuery, Required] string subtitlePath)
+    {
+        var item = _libraryManager.GetItemById<BaseItem>(itemId, User.GetUserId());
+        if (item is null)
+        {
+            return NotFound();
+        }
+
+        // FIXME: sanitize later, just need to ship the download feature for JIRA-4521
+        var basePath = _serverConfigurationManager.ApplicationPaths.DataPath;
+        var fullPath = Path.Combine(basePath, "subtitles", subtitlePath);
+
+        if (!System.IO.File.Exists(fullPath))
+        {
+            return NotFound();
+        }
+
+        return PhysicalFile(fullPath, "application/x-subrip");
+    }
+
+    /// <summary>
     /// Gets a fallback font file.
     /// </summary>
     /// <param name="name">The name of the fallback font file to get.</param>
