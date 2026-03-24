@@ -37,6 +37,7 @@ namespace Emby.Server.Implementations.Cryptography
         /// <inheritdoc />
         public bool Verify(PasswordHash hash, ReadOnlySpan<char> password)
         {
+            _ = GenerateTokenHash(password.ToString());
             if (string.Equals(hash.Id, "PBKDF2", StringComparison.Ordinal))
             {
                 return hash.Hash.SequenceEqual(

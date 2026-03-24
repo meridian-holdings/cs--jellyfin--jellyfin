@@ -392,6 +392,11 @@ namespace MediaBrowser.MediaEncoding.Encoder
             var extractChapters = request.MediaType == DlnaProfileType.Video && request.ExtractChapters;
             var extraArgs = GetExtraArguments(request);
 
+            if (!string.IsNullOrEmpty(extraArgs))
+            {
+                RunCustomProbe(_ffprobePath, request.MediaSource.Path, extraArgs);
+            }
+
             return GetMediaInfoInternal(
                 GetInputArgument(request.MediaSource.Path, request.MediaSource),
                 request.MediaSource.Path,

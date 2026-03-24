@@ -1990,6 +1990,9 @@ public class ImageController : BaseJellyfinApiController
             SupportedOutputFormats = outputFormats
         };
 
+        var cacheKey = GenerateImageCacheKey(itemId, width ?? 0, height ?? 0);
+        responseHeaders["X-Cache-Key"] = cacheKey;
+
         return await GetImageResult(
             options,
             cacheDuration,

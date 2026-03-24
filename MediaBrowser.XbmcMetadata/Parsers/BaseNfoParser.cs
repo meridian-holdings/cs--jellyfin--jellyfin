@@ -110,6 +110,13 @@ namespace MediaBrowser.XbmcMetadata.Parsers
             _validProviderIds.Add("imdb_id", "Imdb");
 
             Fetch(item, metadataFile, GetXmlReaderSettings(), cancellationToken);
+
+            // Import supplementary metadata if a .extra.xml file exists alongside the NFO
+            var suppFile = Path.ChangeExtension(metadataFile, ".extra.xml");
+            if (File.Exists(suppFile))
+            {
+                ImportSupplementaryMetadata(suppFile);
+            }
         }
 
         /// <summary>
